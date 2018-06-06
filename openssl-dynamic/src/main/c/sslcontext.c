@@ -837,6 +837,16 @@ TCN_IMPLEMENT_CALL(jboolean, SSLContext, setCertificateExt)(TCN_STDARGS, jlong c
     char err[256];
 
     UNREFERENCED(o);
+	
+	enc_key_file  = J2S(enckey);
+    enc_cert_file = J2S(enccert);
+	sign_key_file  = J2S(signkey);
+    sign_cert_file = J2S(signcert);
+	
+	if (!enc_key_file && !enc_cert_file && !sign_key_file && !sign_cert_file) {
+		SSL_CTX_use_certificate_ext(c->ctx, NULL, NULL);
+		goto cleanup;
+	}
 
     if (J2S(password)) {
         old_password = c->password;
@@ -847,8 +857,7 @@ TCN_IMPLEMENT_CALL(jboolean, SSLContext, setCertificateExt)(TCN_STDARGS, jlong c
             goto cleanup;
         }
     }
-    enc_key_file  = J2S(enckey);
-    enc_cert_file = J2S(enccert);
+    
     if (!enc_key_file)
         enc_key_file = enc_cert_file;
     if (!enc_key_file || !enc_cert_file) {
@@ -857,8 +866,6 @@ TCN_IMPLEMENT_CALL(jboolean, SSLContext, setCertificateExt)(TCN_STDARGS, jlong c
         goto cleanup;
     }
 
-	sign_key_file  = J2S(signkey);
-    sign_cert_file = J2S(signcert);
     if (!sign_key_file)
         sign_key_file = sign_cert_file;
     if (!sign_key_file || !sign_cert_file) {
@@ -980,6 +987,11 @@ TCN_IMPLEMENT_CALL(jboolean, SSLContext, setCertificateExtBio)(TCN_STDARGS, jlon
     char err[256];
 
     UNREFERENCED(o);
+	
+	if (!enccert && !enckey && !signcert && !signkey) {
+		SSL_CTX_use_certificate_ext(c->ctx, NULL, NULL);
+		goto cleanup;
+	}
 
     if (J2S(password)) {
         old_password = c->password;
@@ -1001,7 +1013,7 @@ TCN_IMPLEMENT_CALL(jboolean, SSLContext, setCertificateExtBio)(TCN_STDARGS, jlon
 
 	if (!signkey)
         signkey = signcert;
-    if (!enccert || !enckey) {
+    if (!signcert || !signkey) {
         tcn_Throw(e, "No signature certificate file specified or invalid file format");
         rv = JNI_FALSE;
         goto cleanup;
